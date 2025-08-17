@@ -1,0 +1,28 @@
+
+ const FetchApi = (Url, options={}) => {
+async function Api(){
+  setloading(true)
+  try{
+const Response = await fetch(Url,{...options})
+const Data = await Response.json()
+console.log(Data);
+  if(Data) {
+    setdata(Data)
+    setloading(false)
+    seterror(false)
+  }else{
+    seterror(true)
+    setloading(true)
+  } }catch(err){
+    seterror(error)
+    setloading(false)
+}
+
+}
+
+
+ useEffect(()=>{ 
+  Api()
+  setloading(true)
+
+   },[Url])}
