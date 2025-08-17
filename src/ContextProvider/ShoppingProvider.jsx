@@ -1,75 +1,91 @@
-import React, { createContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { createContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
+const ShoppingContext = createContext(null);
 
-const ShoppingContext = createContext(null)
-export const ShoppingProvider = ({children}) => {
-  const [data, setdata] = useState([])
-  const [loading,setloading] = useState(false)
-  const [error, seterror] = useState(false)
-const [cartItem,setcart] = useState([])
-const navigate = useNavigate()
-function handleCart(data){
-const CopyExistingCart = [...cartItem]
-const findIndex = CopyExistingCart.findIndex(
-  (cartItem) => cartItem.id === data.id)
-  if(findIndex === -1){
- CopyExistingCart.push({
-  ...data,
-  quantity : 1,
-  totalPrice : data?.price
- })
-  }else{
+export const ShoppingProvider = ({ children }) => {
+  const [data, setdata] = useState([]);               // stores product list only
+  const [selectedProduct, setSelectedProduct] = useState(null); // single product
+  const [loading, setloading] = useState(false);
+  const [error, seterror] = useState(false);
+  const [cartItem, setcart] = useState([]);
+  const navigate = useNavigate();
 
-CopyExistingCart[findIndex] = {
-  ...CopyExistingCart[findIndex],
-quantity:CopyExistingCart[findIndex].quantity + 1,
-totalPrice:(CopyExistingCart[findIndex].quantity + 1) * CopyExistingCart[findIndex].price
-}
+  // Load cart from localStorage
+  useEffect(() => {
+    const savedCart = JSON.parse(localStorage.getItem('cartItem')) || [];
+    setcart(savedCart);
+  }, []);
 
-  }
-setcart(CopyExistingCart)
-localStorage.setItem('cartItem',JSON.stringify(CopyExistingCart))
-navigate('/CartList')
-}
-useEffect(()=>{
-  setcart(JSON.parse(localStorage.getItem('cartItem'))|| [])
-},[])
+  // Load products from localStorage
+  useEffect(() => {
+    const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
+    if (savedProducts.length > 0) setdata(savedProducts);
+  }, []);
 
+  // Save product list to localStorage whenever it changes
+  useEffect(() => {
+    if (data.length > 0) localStorage.setItem('products', JSON.stringify(data));
+  }, [data]);
 
-function RemoveFromCart(data,isFullyRemovefromCart){
-  let CopyExistingCart = [...cartItem]
-  const findIndex = CopyExistingCart.findIndex
-    (cartItem => cartItem.id === data.id)
-    if(isFullyRemovefromCart){
-      CopyExistingCart.splice(findIndex,1)
-    }else{
-      CopyExistingCart[findIndex] = {
-        ...CopyExistingCart[findIndex],
-        quantity : CopyExistingCart[findIndex].quantity - 1,
-        totalPrice : (CopyExistingCart[findIndex].quantity - 1) * CopyExistingCart[findIndex].price
-      }
+  const handleCart = (product) => {
+    const copyCart = [...cartItem];
+    const index = copyCart.findIndex(item => item.id === product.id);
+
+    if (index === -1) {
+      copyCart.push({ ...product, quantity: 1, totalPrice: product.price });
+    } else {
+      copyCart[index] = {
+        ...copyCart[index],
+        quantity: copyCart[index].quantity + 1,
+        totalPrice: (copyCart[index].quantity + 1) * copyCart[index].price
+      };
     }
- localStorage.setItem('cartItem',JSON.stringify(CopyExistingCart))
- setcart(CopyExistingCart)
-}
+
+    setcart(copyCart);
+    localStorage.setItem('cartItem', JSON.stringify(copyCart));
+    navigate('/CartList');
+  };
+
+  const RemoveFromCart = (product, isFullRemove) => {
+    const copyCart = [...cartItem];
+    const index = copyCart.findIndex(item => item.id === product.id);
+    if (index === -1) return;
+
+    if (isFullRemove || copyCart[index].quantity === 1) {
+      copyCart.splice(index, 1);
+    } else {
+      copyCart[index] = {
+        ...copyCart[index],
+        quantity: copyCart[index].quantity - 1,
+        totalPrice: (copyCart[index].quantity - 1) * copyCart[index].price
+      };
+    }
+
+    setcart(copyCart);
+    localStorage.setItem('cartItem', JSON.stringify(copyCart));
+  };
 
   return (
-    <>
-  <ShoppingContext.Provider value={{
-data,
-   setdata,
-   loading,
-  setloading,
-  error, 
-  seterror,
-    cartItem,
-    setcart,
-    handleCart,
-    RemoveFromCart}}>
-    {children}
-   </ShoppingContext.Provider>
-  </>
-  )
-}
-export default ShoppingContext
+    <ShoppingContext.Provider
+      value={{
+        data,
+        setdata,
+        selectedProduct,
+        setSelectedProduct,
+        loading,
+        setloading,
+        error,
+        seterror,
+        cartItem,
+        setcart,
+        handleCart,
+        RemoveFromCart
+      }}
+    >
+      {children}
+    </ShoppingContext.Provider>
+  );
+};
+
+export default ShoppingContext;

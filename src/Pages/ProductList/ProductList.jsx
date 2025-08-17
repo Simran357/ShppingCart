@@ -1,16 +1,16 @@
 import React, { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ShoppingProvider from '../../ContextProvider/ShoppingProvider';
+import ShoppingContext from '../../ContextProvider/ShoppingProvider';
 
 const ProductList = () => {
-  const { data, loading, cartItem, setloading, setdata, seterror, error, handleCart } = useContext(ShoppingProvider);
+  const { data, setdata, loading, setloading, error, seterror } = useContext(ShoppingContext);
   const navigate = useNavigate();
 
-  async function Api() {
+  async function fetchProducts() {
     setloading(true);
     try {
-      const response = await fetch(`https://dummyjson.com/products`);
-      const result = await response.json();
+      const res = await fetch('https://dummyjson.com/products');
+      const result = await res.json();
       if (result?.products) {
         setdata(result.products);
         seterror(false);
@@ -23,59 +23,28 @@ const ProductList = () => {
   }
 
   useEffect(() => {
-    if (!data || data.length === 0) {
-      Api();
-    }
+    if (!data || data.length === 0) fetchProducts();
   }, []);
 
-
-  if (loading) return <h1 className="text-center text-2xl mt-10">Loading...</h1>;
-  if (error) return <h1 className="text-center text-2xl mt-10 text-red-500">Error!!!</h1>;
+  if (loading) return <h1 className="text-center mt-10 text-2xl">Loading...</h1>;
+  if (error) return <h1 className="text-center mt-10 text-2xl text-red-500">Error!</h1>;
 
   return (
     <div className="max-w-7xl mx-auto p-6">
       <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">Our Products</h1>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {data.map(product => (
-          <div
-            key={product.id}
-            className="bg-white rounded-lg shadow hover:shadow-2xl transition-transform transform hover:scale-105"
-          >
-            <div className="relative">
-              <img
-                src={product.thumbnail}
-                alt={product.title}
-                className="w-full h-64 object-cover rounded-t-lg"
-              />
-              {product.discountPercentage > 0 && (
-                <span className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs font-semibold rounded">
-                  {product.discountPercentage}% OFF
-                </span>
-              )}
-            </div>
-            <div className="p-4 flex flex-col justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">{product.title}</h3>
-              <p className="text-gray-600 font-medium mb-2">${product.price}</p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigate(`/ProductDetails/${product.id}`)}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded font-medium"
-                >
-                  View Details
-                </button>
-                <button
-                  onClick={() => handleCart(product)}
-                  disabled={cartItem.findIndex(item => item.id === product.id) > -1}
-                  className={`flex-1 py-2 rounded font-medium text-white ${
-                    cartItem.findIndex(item => item.id === product.id) > -1
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-green-500 hover:bg-green-600'
-                  }`}
-                >
-                  {cartItem.findIndex(item => item.id === product.id) > -1 ? 'Added' : 'Add to Cart'}
-                </button>
-              </div>
+          <div key={product.id} className="bg-white rounded-lg shadow hover:shadow-2xl transition transform hover:scale-105">
+            <img src={product.thumbnail} alt={product.title} className="w-full h-64 object-contain rounded-t-lg" />
+            <div className="p-4 flex flex-col gap-2">
+              <h3 className="font-semibold text-gray-800">{product.title}</h3>
+              <p className="text-gray-600 font-medium">${product.price}</p>
+              <button
+                onClick={() => navigate(`/ProductDetails/${product.id}`)}
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded"
+              >
+                View Details
+              </button>
             </div>
           </div>
         ))}

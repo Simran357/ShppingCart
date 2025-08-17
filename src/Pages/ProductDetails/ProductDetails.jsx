@@ -1,19 +1,19 @@
 import React, { useContext, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import ShoppingProvider from '../../ContextProvider/ShoppingProvider';
+import { useParams, useNavigate } from 'react-router-dom';
+import ShoppingContext from '../../ContextProvider/ShoppingProvider';
 
 const ProductDetails = () => {
-  const { data, loading, setloading, setdata, cartItem, seterror, error, handleCart } = useContext(ShoppingProvider);
   const { id } = useParams();
   const navigate = useNavigate();
+  const { selectedProduct, setSelectedProduct, handleCart, cartItem, loading, setloading, error, seterror } = useContext(ShoppingContext);
 
-  async function Api() {
+  async function fetchProduct() {
     setloading(true);
     try {
-      const response = await fetch(`https://dummyjson.com/products/${id}`);
-      const result = await response.json();
+      const res = await fetch(`https://dummyjson.com/products/${id}`);
+      const result = await res.json();
       if (result) {
-        setdata(result);
+        setSelectedProduct(result);
         seterror(false);
       } else seterror(true);
     } catch {
@@ -23,24 +23,26 @@ const ProductDetails = () => {
     }
   }
 
-  useEffect(() => { Api() }, []);
+  useEffect(() => { fetchProduct() }, [id]);
 
-  if (loading) return <h1 className="text-center text-2xl mt-10">Loading...</h1>;
-  if (error) return <h1 className="text-center text-2xl mt-10 text-red-500">Error!!!</h1>;
+  if (loading) return <h1 className="text-center mt-10 text-2xl">Loading...</h1>;
+  if (error) return <h1 className="text-center mt-10 text-2xl text-red-500">Error!</h1>;
+
+  if (!selectedProduct) return null;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow rounded-lg mt-10">
-      <h1 className="text-2xl font-bold mb-4">{data?.title}</h1>
-      <img className="w-full h-64 object-cover mb-4 rounded" src={data?.thumbnail} alt={data?.title} />
-      <p className="text-gray-700 mb-2">{data?.description}</p>
-      <h2 className="text-xl font-semibold mb-2">${data?.price}</h2>
-      <p className="text-gray-500 mb-4">Discount: {data?.discountPercentage}%</p>
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow rounded">
+      <h1 className="text-2xl font-bold mb-4">{selectedProduct.title}</h1>
+      <img className="w-full h-64 object-contain mb-4 rounded" src={selectedProduct.thumbnail} alt={selectedProduct.title} />
+      <p className="text-gray-700 mb-2">{selectedProduct.description}</p>
+      <h2 className="text-xl font-semibold mb-2">${selectedProduct.price}</h2>
+      <p className="text-gray-500 mb-4">Discount: {selectedProduct.discountPercentage}%</p>
       <button
-        disabled={cartItem.findIndex(item => item.id === data.id) > -1}
-        onClick={() => handleCart(data)}
-        className={`w-full py-2 rounded text-white ${cartItem.findIndex(item => item.id === data.id) > -1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
+        disabled={cartItem.findIndex(item => item.id === selectedProduct.id) > -1}
+        onClick={() => handleCart(selectedProduct)}
+        className={`w-full py-2 rounded text-white ${cartItem.findIndex(item => item.id === selectedProduct.id) > -1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
       >
-        {cartItem.findIndex(item => item.id === data.id) > -1 ? 'Added to Cart' : 'Add to Cart'}
+        {cartItem.findIndex(item => item.id === selectedProduct.id) > -1 ? 'Added to Cart' : 'Add to Cart'}
       </button>
       <button
         onClick={() => navigate('/')}
